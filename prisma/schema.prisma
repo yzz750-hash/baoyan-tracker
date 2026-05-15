@@ -1,0 +1,142 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum ApplicationStatus {
+  PREPARING
+  SUBMITTED
+  INTERVIEW_PREP
+  WAITLISTED
+  OFFER
+  REJECTED
+}
+
+enum DeliveryChannel {
+  EMAIL
+  WECHAT
+  IN_APP
+}
+
+enum DeliveryStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  pushDeerKey  String?
+  icalToken    String   @unique @default(uuid())
+
+  applications  Application[]
+  subscriptions Subscription[]
+  documents     Document[]
+  deliveries    NotificationDelivery[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model University {
+  id         String @id @default(cuid())
+  name       String
+  program    String
+  websiteUrl String
+
+  applications  Application[]
+  subscriptions Subscription[]
+  notifications Notification[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([name, program])
+}
+
+model Application {
+  id           String            @id @default(cuid())
+  userId       String
+  universityId String
+  status       ApplicationStatus @default(PREPARING)
+  ddl          DateTime?
+  nextStep     String?
+  notes        String?
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  university University @relation(fields: [universityId], references: [id])
+  documents  Document[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, universityId])
+}
+
+model Subscription {
+  id           String  @id @default(cuid())
+  userId       String
+  universityId String
+  isActive     Boolean @default(true)
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  university University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, universityId])
+}
+
+model Notification {
+  id           String   @id @default(cuid())
+  universityId String
+  title        String
+  url          String
+  publishDate  DateTime?
+  hash         String   @unique
+  summary      String?
+
+  university University              @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  deliveries NotificationDelivery[]
+
+  createdAt DateTime @default(now())
+}
+
+model NotificationDelivery {
+  id             String   @id @default(cuid())
+  notificationId String
+  userId         String
+  channel        String
+  status         String
+  sentAt         DateTime?
+  errorMessage   String?
+
+  notification Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([notificationId, userId, channel])
+}
+
+model Document {
+  id            String  @id @default(cuid())
+  userId        String
+  type          String
+  version       Int     @default(1)
+  title         String?
+  content       String?
+  fileUrl       String?
+  applicationId String?
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  application Application? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

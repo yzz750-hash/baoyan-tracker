@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: #FFFFFF;
+    --foreground: #1A1A1A;
+    --card: #FAFAFA;
+    --muted-foreground: #6B7280;
+  }
+
+  body {
+    @apply bg-white text-[#1A1A1A];
+  }
+}
