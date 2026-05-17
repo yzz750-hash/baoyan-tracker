@@ -3,9 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 enum ApplicationStatus {
@@ -102,6 +101,7 @@ model Notification {
   publishDate  DateTime?
   hash         String   @unique
   summary      String?
+  extractedData Json?   // LLM 结构化提取结果: { deadline, documents, interview_date, etc }
 
   university University              @relation(fields: [universityId], references: [id], onDelete: Cascade)
   deliveries NotificationDelivery[]

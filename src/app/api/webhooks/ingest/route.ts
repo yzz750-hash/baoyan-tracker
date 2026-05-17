@@ -12,16 +12,18 @@ export async function POST(req: NextRequest) {
 
   for (const n of body.notifications) {
     try {
-      await prisma.notification.create({
-        data: {
-          universityId: body.universityId,
-          title: n.title,
-          url: n.url,
-          publishDate: n.publishDate ? new Date(n.publishDate) : null,
-          hash: n.hash,
-          summary: n.summary,
-        },
-      });
+      const notifData: any = {
+        universityId: body.universityId,
+        title: n.title,
+        url: n.url,
+        publishDate: n.publishDate ? new Date(n.publishDate) : null,
+        hash: n.hash,
+        summary: n.summary,
+      };
+      if (n.extractedData) {
+        notifData.extractedData = n.extractedData;
+      }
+      await prisma.notification.create({ data: notifData });
       inserted++;
     } catch (e: any) {
       if (e.code === "P2002") continue;
