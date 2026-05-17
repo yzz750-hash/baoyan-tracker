@@ -18,11 +18,10 @@ export async function POST(req: NextRequest) {
         url: n.url,
         publishDate: n.publishDate ? new Date(n.publishDate) : null,
         hash: n.hash,
-        summary: n.summary,
+        summary: n.extractedData
+          ? JSON.stringify(n.extractedData)
+          : n.summary || null,
       };
-      if (n.extractedData) {
-        notifData.extractedData = n.extractedData;
-      }
       await prisma.notification.create({ data: notifData });
       inserted++;
     } catch (e: any) {

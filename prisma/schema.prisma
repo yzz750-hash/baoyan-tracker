@@ -101,7 +101,6 @@ model Notification {
   publishDate  DateTime?
   hash         String   @unique
   summary      String?
-  extractedData Json?   // LLM 结构化提取结果: { deadline, documents, interview_date, etc }
 
   university University              @relation(fields: [universityId], references: [id], onDelete: Cascade)
   deliveries NotificationDelivery[]
