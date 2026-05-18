@@ -22,12 +22,18 @@ export async function POST(req: NextRequest) {
           ? JSON.stringify(n.extractedData)
           : n.summary || null,
       };
+      if (n.extractedData) {
+        notifData.extractedData = n.extractedData;
+      }
       try {
-        await prisma.notification.create({
-          data: { ...notifData, extractedData: n.extractedData || undefined },
-        });
-      } catch {
         await prisma.notification.create({ data: notifData });
+      } catch (e: any) {
+        if (n.extractedData && e.message?.includes?.("extractedData")) {
+          delete notifData.extractedData;
+          await prisma.notification.create({ data: notifData });
+        } else {
+          throw e;
+        }
       }
       inserted++;
     } catch (e: any) {
