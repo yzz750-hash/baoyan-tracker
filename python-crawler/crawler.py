@@ -24,7 +24,7 @@ def scrape_notices(list_url, detail_pattern, base_domain, uni_id, uni_name, list
         if detail_pattern not in href:
             continue
 
-        full_url = urljoin(list_url if list_url.endswith("/") else list_url + "/", href)
+        full_url = urljoin(list_url, href)
         publish_date = datetime.datetime.now().isoformat() + "Z"
         raw = f"{uni_id}{title}{publish_date}"
         hash_val = hashlib.md5(raw.encode()).hexdigest()
