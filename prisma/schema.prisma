@@ -99,8 +99,9 @@ model Notification {
   title        String
   url          String
   publishDate  DateTime?
-  hash         String   @unique
-  summary      String?
+  hash          String   @unique
+  summary       String?
+  extractedData Json?
 
   university University              @relation(fields: [universityId], references: [id], onDelete: Cascade)
   deliveries NotificationDelivery[]

@@ -19,8 +19,9 @@ export async function POST(req: NextRequest) {
         publishDate: n.publishDate ? new Date(n.publishDate) : null,
         hash: n.hash,
         summary: n.extractedData
-          ? JSON.stringify(n.extractedData)
+          ? n.extractedData.summary || null
           : n.summary || null,
+        extractedData: n.extractedData || undefined,
       };
       await prisma.notification.create({ data: notifData });
       inserted++;

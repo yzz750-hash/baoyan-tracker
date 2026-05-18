@@ -2,6 +2,7 @@ import hashlib
 import httpx
 import datetime
 import re
+from bs4 import BeautifulSoup
 from config import WEBHOOK_URL, WEBHOOK_SECRET, UNIVERSITY_ID, UNIVERSITY_NAME
 from pdf_parser import find_pdf_links, process_pdf
 
@@ -11,50 +12,54 @@ def fetch_tsinghua_news():
     url = "https://www.cs.tsinghua.edu.cn/index/tzgg.htm"
     resp = httpx.get(url, timeout=30, follow_redirects=True)
     resp.encoding = "utf-8"
-    html = resp.text
-
-    pattern = r'<a[^>]*href=["\']([^"\']+)["\'][^>]*>([^<]+)</a>'
-    links = re.findall(pattern, html)
+    soup = BeautifulSoup(resp.text, "html.parser")
 
     results = []
-    count = 0
-    for href, title in links:
-        title = title.strip()
-        href = href.strip()
+
+    for li in soup.select("ul li"):
+        a_tag = li.find("a", href=True)
+        if not a_tag:
+            continue
+        href = a_tag.get("href", "")
+        title = a_tag.get("title", "") or a_tag.get_text(strip=True)
         if not title or len(title) < 5:
             continue
-        if href.endswith(".htm") or ".htm" in href:
-            if not href.startswith("http"):
-                href = f"https://www.cs.tsinghua.edu.cn/{href.lstrip('/')}"
-            publish_date = datetime.datetime.now().isoformat() + "Z"
-            raw = f"{UNIVERSITY_ID}{title}{publish_date}"
-            hash_val = hashlib.md5(raw.encode()).hexdigest()
+        if "../info/" not in href:
+            continue
 
-            item = {
-                "title": title,
-                "url": href,
-                "publishDate": publish_date,
-                "hash": hash_val,
-                "summary": None,
-            }
+        full_url = f"https://www.cs.tsinghua.edu.cn/{href.lstrip('../')}"
+        publish_date = datetime.datetime.now().isoformat() + "Z"
+        raw = f"{UNIVERSITY_ID}{title}{publish_date}"
+        hash_val = hashlib.md5(raw.encode()).hexdigest()
 
-            # 尝试获取通知详情页并检测 PDF 附件
-            try:
-                detail_resp = httpx.get(href, timeout=15, follow_redirects=True)
-                detail_resp.encoding = "utf-8"
-                pdf_links = find_pdf_links(detail_resp.text, href)
-                if pdf_links:
-                    print(f"[crawl] {title} → 发现 {len(pdf_links)} 个 PDF 附件")
-                    pdf_result = process_pdf(pdf_links[0])
-                    if pdf_result:
-                        item["summary"] = pdf_result
-            except Exception as e:
-                print(f"[crawl] 详情页访问失败 {href[:50]}: {e}")
+        item = {
+            "title": title.strip(),
+            "url": full_url,
+            "publishDate": publish_date,
+            "hash": hash_val,
+            "summary": None,
+        }
 
-            results.append(item)
-            count += 1
-            if count >= 10:
-                break
+        # 详情页检测 PDF 附件
+        try:
+            detail = httpx.get(full_url, timeout=15, follow_redirects=True)
+            detail.encoding = "utf-8"
+            pdf_links = find_pdf_links(detail.text, full_url)
+            if pdf_links:
+                print(f"  [pdf] {title[:40]} → {len(pdf_links)} 个附件")
+                pdf_result = process_pdf(pdf_links[0])
+                if pdf_result:
+                    import json
+                    item["extractedData"] = pdf_result
+                    item["summary"] = json.dumps(pdf_result, ensure_ascii=False)
+            else:
+                print(f"       {title[:40]}")
+        except Exception as e:
+            print(f"       {title[:40]} (详情页: {str(e)[:30]})")
+
+        results.append(item)
+        if len(results) >= 10:
+            break
 
     print(f"[crawl] 抓取到 {len(results)} 条通知")
     return results
@@ -80,5 +85,3 @@ if __name__ == "__main__":
     news = fetch_tsinghua_news()
     if news:
         push_to_webhook(news)
-    else:
-        print("[warn] 没有抓取到通知")

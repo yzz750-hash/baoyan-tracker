@@ -4,6 +4,7 @@ import tempfile
 import os
 import json
 from typing import Optional
+from urllib.parse import urljoin
 from config import LLM_API_KEY, LLM_BASE_URL, LLM_MODEL
 
 
@@ -17,7 +18,7 @@ def find_pdf_links(html: str, base_url: str) -> list[str]:
     for pattern in patterns:
         matches = re.findall(pattern, html, re.IGNORECASE | re.DOTALL)
         for m in matches:
-            url = m if m.startswith("http") else base_url.rstrip("/") + "/" + m.lstrip("/")
+            url = m if m.startswith("http") else urljoin(base_url, m)
             if url not in pdf_links:
                 pdf_links.append(url)
     return pdf_links
