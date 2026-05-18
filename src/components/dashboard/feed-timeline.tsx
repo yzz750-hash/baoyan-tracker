@@ -51,9 +51,14 @@ export function FeedTimeline({ notifications }: { notifications: FeedItem[] }) {
           <div className="flex-1 min-w-0 pb-4">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <h4 className="text-sm font-medium text-[#1A1A1A] group-hover:text-[#FF6B35] transition-colors leading-snug">
+                <a
+                  href={n.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm font-medium text-[#1A1A1A] group-hover:text-[#FF6B35] transition-colors leading-snug no-underline"
+                >
                   {n.title}
-                </h4>
+                </a>
                 <p className="text-xs text-[#6B7280] mt-1">
                   {n.university.name} · {n.university.program}
                 </p>
