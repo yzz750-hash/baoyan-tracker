@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { ProgressOverview } from "@/components/dashboard/progress-overview";
 import { UrgentDDL } from "@/components/dashboard/urgent-ddl";
 import { FeedTimeline } from "@/components/dashboard/feed-timeline";
+import { RefreshButton } from "@/components/dashboard/refresh-button";
 
 const statusLabels: Record<string, string> = {
   PREPARING: "材料准备",
@@ -81,9 +82,12 @@ export default async function DashboardPage() {
       <UrgentDDL deadlines={deadlines} />
 
       <div className="bg-white border border-gray-100 rounded-xl p-6">
-        <h2 className="text-sm font-semibold text-[#1A1A1A] mb-4">
-          已订阅院校动态
-        </h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-semibold text-[#1A1A1A]">
+            已订阅院校动态
+          </h2>
+          <RefreshButton />
+        </div>
         <FeedTimeline notifications={feed} />
       </div>
 
