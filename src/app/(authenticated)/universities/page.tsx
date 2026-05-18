@@ -38,6 +38,27 @@ export default function UniversitiesPage() {
   }, [query]);
 
   const [subscribeError, setSubscribeError] = useState("");
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newProgram, setNewProgram] = useState("");
+  const [newUrl, setNewUrl] = useState("");
+
+  const handleAddUniversity = async () => {
+    if (!newName.trim() || !newProgram.trim()) return;
+    setSubscribeError("");
+    try {
+      const res = await fetch("/api/universities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newName.trim(), program: newProgram.trim(), websiteUrl: newUrl.trim() }),
+      });
+      if (!res.ok) { setSubscribeError("添加失败"); return; }
+      const uni = await res.json();
+      setUniversities((prev) => [...prev, uni]);
+      setNewName(""); setNewProgram(""); setNewUrl("");
+      setShowAddForm(false);
+    } catch { setSubscribeError("网络错误"); }
+  };
 
   const handleSubscribe = async (universityId: string) => {
     setLoading(true);
@@ -79,6 +100,46 @@ export default function UniversitiesPage() {
           className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent transition-shadow"
         />
       </div>
+
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-[#6B7280]">{universities.length} 所院校</p>
+        <button
+          onClick={() => setShowAddForm(!showAddForm)}
+          className="text-xs text-[#FF6B35] hover:underline"
+        >
+          {showAddForm ? "取消" : "+ 添加院校"}
+        </button>
+      </div>
+
+      {showAddForm && (
+        <div className="border border-gray-200 rounded-xl p-4 space-y-3 bg-white">
+          <input
+            placeholder="院校名称（如：北京大学）"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B35]"
+          />
+          <input
+            placeholder="专业方向（如：计算机科学与技术）"
+            value={newProgram}
+            onChange={(e) => setNewProgram(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B35]"
+          />
+          <input
+            placeholder="官网地址（可选）"
+            value={newUrl}
+            onChange={(e) => setNewUrl(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B35]"
+          />
+          <button
+            onClick={handleAddUniversity}
+            disabled={!newName.trim() || !newProgram.trim()}
+            className="w-full py-2 bg-[#FF6B35] text-white text-sm font-medium rounded-lg hover:bg-[#FF6B35]/90 disabled:opacity-40 transition-colors"
+          >
+            添加
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {universities.map((uni) => {

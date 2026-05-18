@@ -11,3 +11,15 @@ export async function GET(req: NextRequest) {
   });
   return NextResponse.json(universities);
 }
+
+export async function POST(req: NextRequest) {
+  const body = await req.json();
+  const { name, program, websiteUrl } = body;
+  if (!name || !program) {
+    return NextResponse.json({ error: "name and program required" }, { status: 400 });
+  }
+  const uni = await prisma.university.create({
+    data: { name, program, websiteUrl: websiteUrl || "" },
+  });
+  return NextResponse.json(uni);
+}
