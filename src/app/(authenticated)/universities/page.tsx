@@ -37,15 +37,24 @@ export default function UniversitiesPage() {
     return () => clearTimeout(timer);
   }, [query]);
 
+  const [subscribeError, setSubscribeError] = useState("");
+
   const handleSubscribe = async (universityId: string) => {
     setLoading(true);
+    setSubscribeError("");
     try {
-      await fetch("/api/subscriptions", {
+      const res = await fetch("/api/subscriptions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ universityId }),
       });
+      if (!res.ok) {
+        setSubscribeError("订阅失败，请确认已登录");
+        return;
+      }
       setSubscribedIds((prev) => new Set(prev).add(universityId));
+    } catch {
+      setSubscribeError("网络错误，请重试");
     } finally {
       setLoading(false);
     }
@@ -113,6 +122,12 @@ export default function UniversitiesPage() {
           );
         })}
       </div>
+
+      {subscribeError && (
+        <div className="text-center py-4 text-sm text-red-500">
+          {subscribeError}
+        </div>
+      )}
 
       {universities.length === 0 && (
         <div className="text-center py-12 text-sm text-[#6B7280]">
