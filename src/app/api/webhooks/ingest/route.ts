@@ -19,11 +19,16 @@ export async function POST(req: NextRequest) {
         publishDate: n.publishDate ? new Date(n.publishDate) : null,
         hash: n.hash,
         summary: n.extractedData
-          ? n.extractedData.summary || null
+          ? JSON.stringify(n.extractedData)
           : n.summary || null,
-        extractedData: n.extractedData || undefined,
       };
-      await prisma.notification.create({ data: notifData });
+      try {
+        await prisma.notification.create({
+          data: { ...notifData, extractedData: n.extractedData || undefined },
+        });
+      } catch {
+        await prisma.notification.create({ data: notifData });
+      }
       inserted++;
     } catch (e: any) {
       if (e.code === "P2002") continue;
