@@ -31,3 +31,18 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json(sub);
 }
+
+export async function DELETE(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { universityId } = await req.json();
+
+  await prisma.subscription.updateMany({
+    where: { userId: session.user.id, universityId, isActive: true },
+    data: { isActive: false },
+  });
+
+  return NextResponse.json({ success: true });
+}

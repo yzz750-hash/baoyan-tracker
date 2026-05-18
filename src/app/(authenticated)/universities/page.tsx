@@ -60,20 +60,27 @@ export default function UniversitiesPage() {
     } catch { setSubscribeError("网络错误"); }
   };
 
-  const handleSubscribe = async (universityId: string) => {
+  const handleToggleSubscribe = async (universityId: string, currentlySubscribed: boolean) => {
     setLoading(true);
     setSubscribeError("");
     try {
-      const res = await fetch("/api/subscriptions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ universityId }),
-      });
-      if (!res.ok) {
-        setSubscribeError("订阅失败，请确认已登录");
-        return;
+      if (currentlySubscribed) {
+        const res = await fetch("/api/subscriptions", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ universityId }),
+        });
+        if (!res.ok) { setSubscribeError("取消失败"); return; }
+        setSubscribedIds((prev) => { const next = new Set(prev); next.delete(universityId); return next; });
+      } else {
+        const res = await fetch("/api/subscriptions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ universityId }),
+        });
+        if (!res.ok) { setSubscribeError("订阅失败，请确认已登录"); return; }
+        setSubscribedIds((prev) => new Set(prev).add(universityId));
       }
-      setSubscribedIds((prev) => new Set(prev).add(universityId));
     } catch {
       setSubscribeError("网络错误，请重试");
     } finally {
@@ -161,11 +168,11 @@ export default function UniversitiesPage() {
               </div>
 
               <button
-                onClick={() => handleSubscribe(uni.id)}
+                onClick={() => handleToggleSubscribe(uni.id, isSubscribed)}
                 disabled={loading}
                 className={`mt-4 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${
                   isSubscribed
-                    ? "bg-[#FF6B35]/10 text-[#FF6B35] border border-[#FF6B35]/20"
+                    ? "bg-[#FF6B35]/10 text-[#FF6B35] border border-[#FF6B35]/20 hover:bg-red-50 hover:text-red-500 hover:border-red-200"
                     : "bg-[#FF6B35] text-white hover:bg-[#FF6B35]/90"
                 }`}
               >
