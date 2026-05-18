@@ -1,4 +1,11 @@
 import { ExternalLink, Bell } from "lucide-react";
+import { DocumentChecklist } from "./document-checklist";
+
+interface ExtractedData {
+  required_documents?: string[];
+  target_program?: string;
+  summary?: string;
+}
 
 interface FeedItem {
   id: string;
@@ -7,6 +14,7 @@ interface FeedItem {
   publishDate: Date | null;
   createdAt: Date;
   university: { name: string; program: string };
+  extractedData?: unknown;
 }
 
 export function FeedTimeline({ notifications }: { notifications: FeedItem[] }) {
@@ -67,6 +75,16 @@ export function FeedTimeline({ notifications }: { notifications: FeedItem[] }) {
                 </a>
               </div>
             </div>
+
+            {(() => {
+              const ed = n.extractedData as ExtractedData | null | undefined;
+              return ed?.required_documents ? (
+                <DocumentChecklist
+                  notificationId={n.id}
+                  documents={ed.required_documents}
+                />
+              ) : null;
+            })()}
           </div>
         </div>
       ))}

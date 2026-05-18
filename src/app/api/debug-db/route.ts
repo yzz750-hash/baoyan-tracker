@@ -6,14 +6,11 @@ export async function POST(req: NextRequest) {
     if (authHeader !== `Bearer ${process.env.WEBHOOK_SECRET}`) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const body = await req.json();
     const { prisma } = await import("@/lib/prisma");
-    const recent = await prisma.notification.findFirst({
-      where: { extractedData: { not: null } },
-      orderBy: { createdAt: "desc" },
-      select: { id: true, title: true, extractedData: true, summary: true, createdAt: true },
-    });
-    return NextResponse.json({ success: true, recent, body });
+    const recent = await prisma.$queryRaw<
+      { id: string; title: string; extractedData: unknown; createdAt: Date }[]
+    >`SELECT id, title, "extractedData", "createdAt" FROM "Notification" WHERE "extractedData" IS NOT NULL ORDER BY "createdAt" DESC LIMIT 1`;
+    return NextResponse.json({ success: true, recent: recent[0] || null });
   } catch (e: any) {
     return NextResponse.json(
       { error: e.message?.slice(0, 200) },
